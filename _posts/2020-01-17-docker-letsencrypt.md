@@ -1,3 +1,14 @@
+---
+title: letsencrypt申请以及过期后重新申请https证书
+date: 2020-01-17 13:30:09
+categories:
+- https
+tags:
+- certbot
+- letsencrypt
+- docker
+---
+
 ## 背景
 
 用docker版本的caddy安装过，中间申请证书一步各种报错。于是改用cerbort手工申请证书。
@@ -184,8 +195,8 @@ $ sudo yum install bind-utils
 $ nslookup -type=TXT _acme-challenge.yourdomain.xyz
 
 [centos@ip-172-26-11-163 ~]$ nslookup -type=TXT _acme-challenge.yourdomain.xyz
-Server:         172.26.0.2
-Address:        172.26.0.2#53
+Server:         172.x.x.x
+Address:        172.x.x.x#53
 ##没有生效 TXT记录
 ** server can't find _acme-challenge.yourdomain.xyz: NXDOMAIN
 ```
@@ -193,8 +204,8 @@ Address:        172.26.0.2#53
 ```shell
 #成功  输出里能看到值yUHptibTcfwPXVqyfTCL4LNtIAaB8Alna45oQddW5Q
 $  nslookup -type=TXT _acme-challenge.www.yourdomain.xyz
-Server:         172.26.0.2
-Address:        172.26.0.2#53
+Server:         172.x.x.x
+Address:        172.x.x.x#53
 
 Non-authoritative answer:
 _acme-challenge.www.yourdomain.xyz  text = "nyUHptibTcfwPXVqyfTCL4LNtIAaB8Alna45oQddW5Q"
@@ -347,8 +358,8 @@ certbot renew --quiet
 no crontab for root - using an empty one
 #可以先随意输入点内容
 #编辑后保存，会生成一个root文件
-[root@ip-172-26-7-109 ~]# cd /var/spool/cron
-[root@ip-172-26-7-109 cron]# ll
+[root@ip- ~]# cd /var/spool/cron
+[root@ip- cron]# ll
 total 4
 -rw-------. 1 root root 71 Oct 21 10:49 root
 ```
@@ -740,8 +751,8 @@ $ sudo certbot revoke --cert-path /etc/letsencrypt/live/yourdomain.xyz/cert.pem 
 
 ~~~
 # nslookup -type=TXT _acme-challenge.yourdomain.xyz
-Server:         172.26.0.2
-Address:        172.26.0.2#53
+Server:         172.x.x.x
+Address:        172.x.x.x#53
 
 Non-authoritative answer:
 _acme-challenge.yourdomain.xyz  text = "uQ0w86kWKq5EmdKRWRK0jtwYasTydzDsr9GHZ4J550Q"
@@ -749,8 +760,8 @@ _acme-challenge.yourdomain.xyz  text = "uQ0w86kWKq5EmdKRWRK0jtwYasTydzDsr9GHZ4J5
 Authoritative answers can be found from:
 
 # nslookup -type=TXT _acme-challenge.www.yourdomain.xyz
-Server:         172.26.0.2
-Address:        172.26.0.2#53
+Server:         172.x.x.x
+Address:        172.x.x.x#53
 
 Non-authoritative answer:
 _acme-challenge.www.yourdomain.xyz      text = "sixnxEeTJtU6Q9umrNq3JG3piGPS2weHIRsEGDX686I"
