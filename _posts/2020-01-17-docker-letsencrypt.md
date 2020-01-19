@@ -9,6 +9,9 @@ tags:
 - docker
 ---
 
+letsencrypt申请证书，以及过期后重新申请https证书，renew证书需要hook脚本，未实验。
+
+
 ## 背景
 
 用docker版本的caddy安装过，中间申请证书一步各种报错。于是改用cerbort手工申请证书。
@@ -23,7 +26,6 @@ Let’s Encrypt 的通配符证书 (Wildcard Certificate) 于 2018 年 3 月中�
 
 [Certbot](https://certbot.eff.org/) 官网也有安装步骤供您参考，本文只记录安装通配符证书的基本操作步骤，与其他软件集成和配置步骤不在本文范围
 
-<!-- more -->
 
 ### 安装 Certbot
 
