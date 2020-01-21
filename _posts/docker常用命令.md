@@ -1,0 +1,268 @@
+---
+title: docker常用命令
+date: 2020-01-21 13:30:09
+categories:
+- docker
+tags:
+- docker
+---
+
+# 1.安装部分
+
+## 1.1 查找nginx镜像，第一个为官方做的。
+
+~~~shell
+#默认拉去仓库上最新的版本
+$ sudo docker search nginx
+
+#指定版本方式 XXX:1.17.2 
+$ sudo docker search nginx:1.17.2
+
+#如何查看有哪些历史版本，目前只能上hub.docker.com查看
+~~~
+
+
+
+## 这里我们拉取官方的镜像
+
+~~~shell
+$ sudo docker pull nginx
+Using default tag: latest
+latest: Pulling from library/nginx
+~~~
+
+
+
+等待下载完成后，我们就可以在本地镜像列表里查到 REPOSITORY 为 nginx 的镜像。
+
+```shell
+$ sudo docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               latest              53f3fd8007f7        10 days ago         109MB
+
+```
+
+
+
+## 以下命令使用 NGINX 默认的配置来启动一个 Nginx 容器实例
+
+```shell
+$ sudo docker run -p 80:80 -d nginx --name mynginx
+0fb25da1a342ef3f632013fae5c6bbafbaca7317e3aaa2786a599b66e9a8bdb0
+```
+
+
+
+### 参数解释
+
+`mynginx : 运行起来的容器名称。exec -it进入容器时候可用，比较方便`
+
+`nginx :  pull下来的镜像名称。`  
+
+`-v {宿主机路径}:{docker container路径}`
+
+`-d 设置容器在在后台一直运行。`
+`-p  端口进行映射，将本地 8081 端口映射到容器内部的 80 端口。`
+`执行以上命令会生成一串字符串，类似 0fb25da1a342ef3f632013fae5c6bbafbaca7317e3aaa2786a599b66e9a8bdb0，这个表示容器的 ID，一般可作为日志的文件名。`
+
+
+
+## 查看运行中的容器
+
+docker ps -a 查看所有容器（ 包含停止状态的 container ）
+
+```shell
+$ sudo docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+0fb25da1a342        nginx               "nginx -g 'daemon of…"   40 seconds ago      Up 31 seconds       0.0.0.0:8081->80/tcp   sst-nginx
+
+```
+
+
+
+## 进入容器
+
+```text
+docker exec -it 容器id /bin/bash
+```
+
+缺省的Nginx安装在var/lib/nginx下，配置在etc/nginx下面，包括nginx.conf主配置文件，conf.d和site-enabled是附加的配置文件。后面，我们将会该目录映射到宿主机目录，以便于修改和管理。
+
+
+
+~~~shell
+$ sudo docker exec -it mynginx  bash
+
+#进入容器查看安装的nginx 版本
+root@970d749e5b89:/# nginx -V
+nginx version: nginx/1.17.2
+built by gcc 8.3.0 (Debian 8.3.0-6)
+built with OpenSSL 1.1.1c  28 May 2019
+TLS SNI support enabled
+....
+~~~
+
+
+
+## 退出容器
+
+~~~shell
+#退出容器而且不关闭 很重要！！！！！！！！！
+ ctrl+Q+P
+ 
+#退出容器关闭，貌似容器也还是再运行。并未停止
+ exit
+~~~
+
+
+
+## 启动 Docker 后台服务
+
+```shell
+$ sudo systemctl start docker
+```
+
+后台启动后原来安装着的镜像就已经在跑了，不需要docker run命令再执行
+
+
+
+
+
+
+PORTS 部分表示端口映射，本地的 8081 端口映射到容器内部的 80 端口。
+
+在浏览器中打开 http://xx.xx.191.86:8081
+
+
+直接就显示了nginx的欢迎页面，的确方便。
+
+
+
+~~~shell
+#删除images，通过image的id来指定删除谁
+docker rmi <image id>
+
+#如果想要删除所有container的话再加一个指令：
+docker rm $(docker ps -a -q)
+
+#要删除全部image的话
+docker rmi $(docker images -q)
+
+#停止正在运行的容器
+sudo docker stop b41ef5502931（通过docker ps查看到的containerid）
+
+~~~
+
+
+
+# 2.其他常用命令
+
+
+
+## 2.1.Docker 的磁盘使用情况
+
+~~~shell
+$ sudo docker  system df
+TYPE                TOTAL               ACTIVE              SIZE                RECLAIMABLE
+Images              6                   3                   989.9MB             920.4MB (92%)
+Containers          3                   3                   204.3kB             0B (0%)
+Local Volumes       11                  2                   1.279MB             32.77kB (2%)
+Build Cache         0                   0                   0B                  0B
+
+~~~
+
+## 2.2 Docker的内存,CPU使用情况
+
+~~~shell
+$ sudo docker stats
+CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT     MEM %               NET I/O             BLOCK I/O           PIDS
+1c885ce9b1ff        nginx-container     0.00%               1.453MiB / 989.4MiB   0.15%               153kB / 929kB       6.75MB / 0B         2
+57bcf17842da        django-container    0.00%               65.47MiB / 989.4MiB   6.62%               6.58kB / 0B         25.7MB / 0B         9
+# modest_dubinsky为springboot项目，占用内存282m，还是相当占资源。不知道能否优化
+e73d98ebb7cd        modest_dubinsky     0.01%               282.1MiB / 989.4MiB   28.51%              14.6MB / 12.8MB     62.4MB / 0B         33
+
+~~~
+
+> 如果不想持续的监控容器使用资源的情况，可以通过 --no-stream 选项只输出当前的状态：
+>
+
+```shell
+$ sudo docker stats --no-stream
+```
+
+
+
+## 2.3 查看镜像编译历史
+
+~~~shell
+# --no-trunc :显示完整的提交记录；
+$ sudo docker history v2ray/official --no-trunc
+~~~
+
+
+
+## 2.4 查看容器里的日志
+
+~~~shell
+$ sudo docker logs 容器名/id
+~~~
+
+
+
+## 2.5 查看容器ip地址
+
+docker-compose起来的容器似乎看不到。
+
+docker run命令起来的可以看到
+
+~~~
+# docker inspect -f '{{.Name}} - {{.NetworkSettings.IPAddress }}' $(docker ps -aq)
+/myjenkins -
+/mahjongapi - 172.17.0.2
+
+可以看出用docker-compose的ip地址放在了NetworkSettings.Networks下面，.NetworkSettings.IPAddress为空
+ "NetworkSettings": {
+            "Bridge": "",
+            "IPAddress": "",
+            "Networks": {
+                "sentry_default": {
+                    "Gateway": "172.xx.0.1",
+                    "IPAddress": "172.xx.0.3",
+                }
+            }
+        }
+
+~~~
+
+
+
+
+
+# 3.报错解决
+
+~~~shell
+#删除已经停掉了的镜像images，报错
+$ sudo docker rmi  3e7e2429618c
+Error response from daemon: conflict: unable to delete 3e7e2429618c (must be forced) - image is being used by stopped container b41ef5502931
+#----------------------------------
+#原因
+#----------------------------------
+#容器虽然停掉了，但是还存在，可以用 sudo docker  ps -a查看到
+$ sudo docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                       PORTS               NAMES
+b41ef5502931        3e7e2429618c        "java -Djava.securit…"   2 months ago        Exited (137) 5 minutes ago                       heuristic_ptolemy
+
+#所以要先删除容器，
+$ sudo docker rm b41ef5502931(这里是容器id)
+b41ef5502931
+
+#再删除镜像，怎么有3个delete提示出来？
+$ sudo docker rmi  3e7e2429618c
+Deleted: sha256:3e7e2429618c041ed12442a058e69e8a0aaa4fd516d010c04ec56b802956a3c5
+Deleted: sha256:bbe0648bb168af5f268820d31bc3f189fd6e4bf2be7b6d2fe8eb76912e8ffa27
+Deleted: sha256:1c733459d6ae056633633bc21659bc1d37994e2d67b70de18aa52dd56b976b3c
+
+~~~
+
+
+
